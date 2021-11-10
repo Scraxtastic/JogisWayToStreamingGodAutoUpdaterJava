@@ -3,6 +3,7 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,7 +15,7 @@ public class ProjectUpdater {
     private final String latestVersionUrlFormat = "https://github.com/%s/%s/releases/latest/";
 
     private String latestDownloadUrl;
-    private String latestVersionUrl ;
+    private String latestVersionUrl;
 
     private String _username;
     private String _repo;
@@ -31,7 +32,8 @@ public class ProjectUpdater {
 
     public void update(String latestVersionFileName, String updateZipName,
                        String updateFolderName, String gameFolderName, String oldGameFolderName) {
-        Path filePath = Path.of(latestVersionFileName);
+        Path filePath = Paths.get(latestVersionFileName);
+
         boolean isLatestVersion = true;
         try {
             String latestVersionWebsite = getUrlContent((latestVersionUrl));
@@ -39,8 +41,8 @@ public class ProjectUpdater {
             String latestVersionLinkDecoded = "";
             if (matcher.find()) {
                 String latestVersionLink = matcher.group(1).split("\"")[0];
-                latestVersionLinkDecoded = java.net.URLDecoder.decode(latestVersionLink, StandardCharsets.UTF_8.name());
-                if (!Files.exists(filePath) || !Files.readString(filePath).equals(latestVersionLinkDecoded)) {
+                latestVersionLinkDecoded = URLDecoder.decode(latestVersionLink, StandardCharsets.UTF_8.name());
+                if (!Files.exists(filePath) || !readFile(filePath).equals(latestVersionLinkDecoded)) {
                     isLatestVersion = false;
                 }
             }
@@ -60,11 +62,13 @@ public class ProjectUpdater {
                 if (updateFolder.exists())
                     Files.move(updateFolder.toPath(), new File(gameFolderName).toPath(), StandardCopyOption.REPLACE_EXISTING);
                 System.out.println("Moved folder to " + updateFolder.getAbsolutePath());
-                Files.writeString(filePath, latestVersionLinkDecoded);
+                writeFile(filePath, latestVersionLinkDecoded);
                 System.out.println("Updated successfully.");
             } else {
                 System.out.println("Already latest version.");
             }
+        }catch(UnknownHostException e){
+            System.out.println("Your connection probably timed out...");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -164,6 +168,32 @@ public class ProjectUpdater {
         }
 
         return destFile;
+    }
+
+    public String readFile(String path) throws IOException {
+        return new String(Files.readAllBytes(Paths.get(path)));
+    }
+
+    public String readFile(Path path) throws IOException {
+        return new String(Files.readAllBytes(path));
+    }
+
+    public void writeFile(String pathName, String content) {
+        Path path = Paths.get(pathName);
+
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            writer.write(content);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeFile(Path path, String content) {
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            writer.write(content);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean deleteDirectory(File directoryToBeDeleted) {

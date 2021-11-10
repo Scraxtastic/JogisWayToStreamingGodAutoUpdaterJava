@@ -1,4 +1,4 @@
-import java.io.*;
+import java.io.IOException;
 
 public class Launcher {
     public static void main(String[] args) {
@@ -12,7 +12,7 @@ public class Launcher {
         String gamePath = gameFolderName + "/JogisWayToStreamingGod.exe";
         Runtime runtime = Runtime.getRuntime();
         try {
-           runtime.exec("cmd /c start " + gamePath);
+            runtime.exec("cmd /c start " + gamePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
